@@ -13,7 +13,6 @@ set -e
 
 INPUT_FILE="$1"
 OUTPUT_FILE=$( echo $INPUT_FILE | sed 's/.enc//' )
-PW_FILE=$( mktemp pwfile.XXXXXXXX )
 
 if [ ! -f "${INPUT_FILE}" ]; then
     echo "The file [${INPUT_FILE}] does not exist"
@@ -22,6 +21,4 @@ fi
 
 read -s -r -p "Password to unlock file: " PASSWORD1
 
-echo "${PASSWORD1}" > "${PW_FILE}"
-openssl enc -aes-256-cbc -d -salt -in "${INPUT_FILE}" -out "${OUTPUT_FILE}" -pass file:"${PW_FILE}"
-rm "${PW_FILE}"
+echo "${PASSWORD1}" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -in "${INPUT_FILE}" -out "${OUTPUT_FILE}" -pass stdin

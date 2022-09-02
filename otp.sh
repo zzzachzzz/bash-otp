@@ -16,33 +16,25 @@ G_MODE="$( echo $TOKENFILES_DIR_MODE | awk  -F '' '{print $4 $5 $6}' )"
 A_MODE="$( echo $TOKENFILES_DIR_MODE | awk  -F '' '{print $7 $8 $9}' )"
 
 if [ "$( echo $G_MODE | egrep 'r|w|x' )" -o "$( echo $A_MODE | egrep 'r|w|x' )" ]; then
-    echo "Perms on [${TOKENFILES_DIR}] are too permissive. Try 'chmod 700 ${TOKENFILES_DIR}' first"
+    echo "Perms on [$TOKENFILES_DIR] are too permissive. Try 'chmod 700 $TOKENFILES_DIR' first"
     exit 1
 fi
 
-token="$1"
-if [ -z "$token" ]; then echo "Need token filename"; exit 1; fi
+tokenfile="$1"
+if [ -z "$tokenfile" ]; then echo "Need token file"; exit 1; fi
 
-# Returns the token
-function get_decrypted_token_from_file {
+if [[ -f "$tokenfile" ]]; then
     read -s -r -p "Password: " PASSWORD
-    echo $PASSWORD | openssl enc -aes-256-cbc -d -salt -pass stdin -in ${TOKENFILES_DIR}/${token}.enc
-}
-
-function get_plaintext_token_from_file {
-    cat ${TOKENFILES_DIR}/$token
-}
-
-if [[ -f "${TOKENFILES_DIR}/${token}.enc" ]]; then
-    TOKEN=$( get_decrypted_token_from_file $token )
-elif [[ -f "${TOKENFILES_DIR}/${token}" ]]; then
-    TOKEN=$( get_plaintext_token_from_file $token )
+    TOKEN=$(echo $PASSWORD | openssl enc -aes-256-cbc -pbkdf2 -d -salt -pass stdin -in "$tokenfile")
+    if [ $? -ne 0 ]; then
+      echo "ERROR: Unable to decrypt. Exiting"
+      exit 1
+    fi
 else
-    echo "ERROR: Key file [${TOKENFILES_DIR}/$token] doesn't exist"
+    echo "ERROR: Key file [$tokenfile] doesn't exist"
     exit 1
 fi
 
-#TOKEN=$( get_decrypted_token_from_file $token )
 echo
 D=0
 D="$( date  +%S )"

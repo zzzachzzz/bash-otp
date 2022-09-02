@@ -1,4 +1,43 @@
 # bash-otp
+
+## Changes made in this fork
+* Allow supplying password to otp scripts with stdin. Example use case: `fn_get_pass | ./otp.sh tokenfiles/file.enc`
+* Specify token file by path, rather than by filename (allows for tab completion)
+* Use `-pbkdf2` with all `openssl enc` operations (see `man openssl enc`)
+* Supply passwords to `openssl` with stdin instead of temp files
+* Remove functionality for reading tokens from plaintext files, assume encrypted
+* Supply a script `import-gauth-json.sh` that imports from Google Authenticator with the help of [krissrex/google-authenticator-exporter](https://github.com/krissrex/google-authenticator-exporter)
+
+### Suggested helper configuration
+I opted to store the password used for encrypting my token files in my password manager, Bitwarden. Thus, my config uses the Bitwarden CLI. You can achieve something similar with the LastPass CLI, KeePass, etc.
+```bash
+export BASH_OTP_TOKENFILES_DIR="/home/zach/tokenfiles"
+
+function bwunlock() { export BW_SESSION=$(bw unlock --raw) }
+
+function otpgetpass() {
+  if [ $(bw status | jq -r '.status') != 'unlocked' ]; then
+    echo "Bitwarden is locked" >&2
+    return 1
+  fi
+  bw get password "<id-of-vault-item>"
+}
+
+function otp() {
+  local pass
+  pass="$(otpgetpass)" || return $?
+  echo "$pass" | ~/git/bash-otp/otp.sh "$@"
+}
+
+function otpadd() {
+  local pass
+  pass="$(otpgetpass)" || return $?
+  echo "$pass" | ~/git/bash-otp/otp-lockfile.sh "$@"
+}
+```
+
+## Original readme
+
 One-Time Password generator for CLI using bash, oathtool.
 
 Automatically copys the token into your computer's copy buffer (MacOS only atm)
