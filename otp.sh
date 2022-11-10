@@ -15,7 +15,7 @@ U_MODE="$( echo $TOKENFILES_DIR_MODE | awk  -F '' '{print $1 $2 $3}' )"
 G_MODE="$( echo $TOKENFILES_DIR_MODE | awk  -F '' '{print $4 $5 $6}' )"
 A_MODE="$( echo $TOKENFILES_DIR_MODE | awk  -F '' '{print $7 $8 $9}' )"
 
-if [ "$( echo $G_MODE | egrep 'r|w|x' )" -o "$( echo $A_MODE | egrep 'r|w|x' )" ]; then
+if [ "$( echo $G_MODE | grep -E 'r|w|x' )" -o "$( echo $A_MODE | grep -E 'r|w|x' )" ]; then
     echo "Perms on [$TOKENFILES_DIR] are too permissive. Try 'chmod 700 $TOKENFILES_DIR' first"
     exit 1
 fi
